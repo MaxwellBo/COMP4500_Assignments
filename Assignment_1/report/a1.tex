@@ -4,6 +4,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{verbatim}
 
 \usepackage{graphicx}
 \graphicspath{ {images/} }
@@ -21,13 +22,57 @@
 \date{September 17, 2018}
 \maketitle
 
-\subsection*{Question A}
-\subsubsection*{(a)}
+\subsection*{Question 1: Constructing SNI and directed graph}
+\subsubsection*{(a) Creating your SNI}
 
 My initial input number was $984392687152$. My resulting SNI was the same, $984392687152$.
 
-\subsubsection*{(b)}
+\subsubsection*{(b) Graph $S$}
 
-\includegraphics[width=\textwidth]{graph}
+\includegraphics[width=5cm]{G-graph}
+\newpage
+\subsection*{Question 2: Strongly connected components}
+
+\subsubsection*{(a) Step 1 of the SCC algorithm using $S$ as input}
+
+To be nicer to my printer, I've substituted gray with yellow, and black with gray.
+
+\includegraphics[width=2.2cm]{G-1}
+\includegraphics[width=2.2cm]{G-2}
+\includegraphics[width=2.2cm]{G-3}
+\includegraphics[width=2.2cm]{G-4}
+\includegraphics[width=2.2cm]{G-5}
+\includegraphics[width=2.2cm]{G-6}
+\includegraphics[width=2.2cm]{G-7}
+\includegraphics[width=2.2cm]{G-8}
+\includegraphics[width=2.2cm]{G-9}
+\includegraphics[width=2.2cm]{G-10}
+\includegraphics[width=2.2cm]{G-11}
+\includegraphics[width=2.2cm]{G-12}
+\includegraphics[width=2.2cm]{G-13}
+\includegraphics[width=2.2cm]{G-14}
+\includegraphics[width=2.2cm]{G-15}
+\includegraphics[width=2.2cm]{G-16}
+\includegraphics[width=2.2cm]{G-17}
+\includegraphics[width=2.2cm]{G-18}
+\includegraphics[width=2.2cm]{G-19}
+\includegraphics[width=2.2cm]{G-20}
+
+\subsubsection*{(b) Step 2 of the SCC algorithm - $S^T$}
+
+\includegraphics[width=2.7cm]{GT-transpose}
+
+\subsubsection*{(c) Step 3 and 4 of the SCC algorithm}
+
+\includegraphics[width=2.7cm]{GT-trees}
+
+The tree rooted with $1$ was constructed first, and the tree rooted with $0$ was constructed second.
+
+\newpage
+
+\begingroup
+\fontsize{11pt}{11pt}\selectfont
+\verbatiminput{pseudo.py} 
+\endgroup
 
 \end{document}

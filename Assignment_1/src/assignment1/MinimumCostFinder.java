@@ -63,8 +63,8 @@ public class MinimumCostFinder {
                             // defensive programming: cost already covered above
                             .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>())
                             .stream()
-                            .filter(t -> delivery.arrival() <= t.departure()) // worst-case O(D)
-                            .map(t -> deliveryToVertex.get(t)) // // worst-case O(D)
+                            .filter(d -> delivery.arrival() <= d.departure()) // worst-case O(D)
+                            .map(d -> deliveryToVertex.get(d)) // // worst-case O(D)
                             .collect(Collectors.toCollection(HashSet::new)); // // worst-case O(D)
 
             adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours); // O(1)
@@ -81,22 +81,22 @@ public class MinimumCostFinder {
         // overall \Theta(D * lg D + E * lg D)
         // As E is O(V^2)
         // overall \Theta(D&2 lg V)
-        djikstra(adjacency, sources);
+        dijkstra(adjacency, sources);
 
-        Optional<Vertex<Delivery>> minVertex = destinationToDeliveries
+        Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationToDeliveries
                 .get(destination) // O(1)
                 .stream()
-                .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
-                .min(Comparator.comparingInt(u -> u.d)); // worst-case O(D - 1)
+                .map(d -> deliveryToVertex.get(d)) // worst-case O(D)
+                .min(Comparator.comparingInt(v -> v.d)); // worst-case O(D - 1)
 
 
         // O(1)
-        if (!minVertex.isPresent()) {
+        if (!lowestDDestinationVertex.isPresent()) {
             return -1;
         } else {
-            int cost = minVertex.get().d;
+            int cost = lowestDDestinationVertex.get().d;
 
-//        Vertex<Delivery> head = minVertex.get().pi;
+//        Vertex<Delivery> head = lowestDDestinationVertex.get().pi;
 //
 //        while (true) {
 //            if (head != null) {
@@ -111,7 +111,7 @@ public class MinimumCostFinder {
         }
     }
 
-    public static void djikstra(
+    public static void dijkstra(
             HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> G,
             HashSet<Vertex<Delivery>> sources
     ) {

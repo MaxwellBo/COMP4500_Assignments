@@ -88,6 +88,7 @@ def dump_graph(G, t, without_backedges=False):
 
 
     os.system(f"dot -Tpng graphs/{tag}-{t}.txt > images/{tag}-{t}.png")
+    print("\includegraphics[width=\2.2cm]{" + f"{tag}-{t}" + "}")
 
 dump_graph(G, "graph")
 dump_graph(GT, "transpose")
@@ -123,7 +124,9 @@ def dfs_visit(G, u):
     dump_graph(G, time)
 
 print("Doing G")
+time = 0
 dfs(G, key=lambda x: x.uid)
+time = 0
 print("Doing GT")
 dfs(GT, key=lambda x: -x.f)
 
