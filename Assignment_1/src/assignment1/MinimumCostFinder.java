@@ -47,8 +47,12 @@ public class MinimumCostFinder {
         // Overall: O(D)
         for (Delivery delivery: deliveries) {
             // foreach P, we construct a HashSet, if the P lookup fails
-            HashSet<Delivery> sourceDeliveries = sourceToDeliveries.computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
-            HashSet<Delivery> destinationDeliveries = destinationToDeliveries.computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
+            HashSet<Delivery> sourceDeliveries =
+                sourceToDeliveries
+                    .computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
+            HashSet<Delivery> destinationDeliveries =
+                destinationToDeliveries
+                    .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
 
             sourceDeliveries.add(delivery); // O(1)
             destinationDeliveries.add(delivery); // O(1)
@@ -64,22 +68,22 @@ public class MinimumCostFinder {
         for (Delivery delivery: deliveries) {
             // worst-case O(D)
             HashSet<Vertex<Delivery>> candidateNeighbours = sourceToDeliveries
-                            // defensive programming: cost already covered above
-                            .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>()) // O(1)
-                            .stream()
-                            .filter(d -> delivery.arrival() <= d.departure()) // worst-case O(D)
-                            .map(d -> deliveryToVertex.get(d)) // // worst-case O(D)
-                            .collect(Collectors.toCollection(HashSet::new)); // // worst-case O(D)
+                // defensive programming: cost already covered above
+                .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>()) // O(1)
+                .stream()
+                .filter(d -> delivery.arrival() <= d.departure()) // worst-case O(D)
+                .map(d -> deliveryToVertex.get(d)) // worst-case O(D)
+                .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
 
             adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours); // O(1)
         }
 
         // worst-case O(D)
         HashSet<Vertex<Delivery>> sources = sourceToDeliveries
-                .get(source) // O(1)
-                .stream()
-                .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
-                .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
+            .get(source) // O(1)
+            .stream()
+            .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
+            .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
 
 
         // djikstras is \Theta(V * lg V + E * lg V),
@@ -92,10 +96,10 @@ public class MinimumCostFinder {
 
         // O(D)
         Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationToDeliveries
-                .get(destination) // O(1)
-                .stream()
-                .map(d -> deliveryToVertex.get(d)) // worst-case O(D)
-                .min(Comparator.comparingInt(v -> v.d)); // worst-case O(D - 1)
+            .get(destination) // O(1)
+            .stream()
+            .map(d -> deliveryToVertex.get(d)) // worst-case O(D)
+            .min(Comparator.comparingInt(v -> v.d)); // worst-case O(D - 1)
 
 
         // O(1)
@@ -203,7 +207,5 @@ public class MinimumCostFinder {
         public int hashCode() {
             return element != null ? element.hashCode() : 0;
         }
-
     }
-
 }
