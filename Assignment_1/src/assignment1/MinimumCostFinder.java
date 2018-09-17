@@ -38,64 +38,75 @@ public class MinimumCostFinder {
         HashMap<Location, HashSet<Delivery>> destinationToDeliveries = new HashMap<>();
         HashMap<Delivery, Vertex<Delivery>> deliveryToVertex = new HashMap<>();
 
-        // O(D)
+        // D iterations
+        // O(1) loop cost
+        // all-case O(P) HashSet construction cost, handshake lemma
+        // Overall: O(D + P)
         for (Delivery delivery: deliveries) {
+            // for each P, we construct a HashSet
             HashSet<Delivery> sourceDeliveries = sourceToDeliveries.computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
             HashSet<Delivery> destinationDeliveries = destinationToDeliveries.computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
 
-            sourceDeliveries.add(delivery);
-            destinationDeliveries.add(delivery);
-            deliveryToVertex.put(delivery, new Vertex<>(delivery));
+            sourceDeliveries.add(delivery); // O(1)
+            destinationDeliveries.add(delivery); // O(1)
+            deliveryToVertex.put(delivery, new Vertex<>(delivery)); // O(1)
         }
 
         HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> adjacency = new HashMap<>();
 
-        // Total O(D^2)
-        // O(D)
+        // D iterations
+        // O(D) loop cost
+        // Overall: O(D^2)
         for (Delivery delivery: deliveries) {
-            // Worst-case O(D)
-
+            // worst-case O(D)
             HashSet<Vertex<Delivery>> candidateNeighbours = sourceToDeliveries
+                            // defensive programming: cost already covered above
                             .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>())
                             .stream()
-                            .filter(t -> delivery.arrival() <= t.departure())
-                            .map(t -> deliveryToVertex.get(t))
-                            .collect(Collectors.toCollection(HashSet::new));
+                            .filter(t -> delivery.arrival() <= t.departure()) // worst-case O(D)
+                            .map(t -> deliveryToVertex.get(t)) // // worst-case O(D)
+                            .collect(Collectors.toCollection(HashSet::new)); // // worst-case O(D)
 
-            adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours);
+            adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours); // O(1)
         }
 
+        // O(D)
         HashSet<Vertex<Delivery>> sources = sourceToDeliveries
-                .get(source)
+                .get(source) // O(1)
                 .stream()
-                .filter(s -> ts <= s.departure())
-                .map(s -> deliveryToVertex.get(s))
-                .collect(Collectors.toCollection(HashSet::new));
+                .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
+                .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
 
 
+        // overall \Theta(D * lg D + E * lg D)
         djikstra(adjacency, sources);
 
         Optional<Vertex<Delivery>> minVertex = destinationToDeliveries
-                .get(destination)
+                .get(destination) // O(1)
                 .stream()
-                .filter(s -> s.arrival() <= td)
-                .map(s -> deliveryToVertex.get(s))
-                .min(Comparator.comparingInt(u -> u.d));
+                .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
+                .min(Comparator.comparingInt(u -> u.d)); // worst-case O(D - 1)
 
 
-        Vertex<Delivery> head = minVertex.get().pi;
-        while (true) {
-            if (head != null) {
-                System.out.println(head.element);
-                head = head.pi;
-            } else {
-                break;
-            }
+        // O(1)
+        if (!minVertex.isPresent()) {
+            return -1;
+        } else {
+            int cost = minVertex.get().d;
+
+//        Vertex<Delivery> head = minVertex.get().pi;
+//
+//        while (true) {
+//            if (head != null) {
+//                System.out.println(head.element);
+//                head = head.pi;
+//            } else {
+//                break;
+//            }
+//        }
+
+            return cost == Integer.MAX_VALUE ? -1 : cost;
         }
-
-        int cost = minVertex.get().d;
-
-        return cost == Integer.MAX_VALUE ? -1 : cost;
     }
 
     static class Priority<T> implements Comparable<Priority<T>> {
@@ -161,6 +172,7 @@ public class MinimumCostFinder {
     ) {
         PriorityQueue<Priority<Vertex<Delivery>>> Q = new PriorityQueue<>();
 
+        // O(D)
         for (Vertex<Delivery> source: sources) {
             source.d = source.element.cost();
             Q.add(
@@ -168,14 +180,19 @@ public class MinimumCostFinder {
             );
         }
 
+        // overall \Theta(D * lg D  + E * lg D)
+        // |D| times
         while (!Q.isEmpty()) {
+            // O(lg D)
             Vertex<Delivery> u = Q.poll().element;
 
+            // degree(u) times
             for (Vertex<Delivery> v: G.computeIfAbsent(u, (k) -> new HashSet<>())) {
                 int candidateCost = u.d + v.element.cost();
 
                 if (v.d > candidateCost) {
                     v.d = candidateCost;
+                    // O(lg D)
                     Q.add(new Priority<>(v.d, v));
                     v.pi = u;
                 }
