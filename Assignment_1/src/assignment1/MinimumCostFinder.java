@@ -35,15 +35,17 @@ public class MinimumCostFinder {
             int ts, Location destination, int td, List<Delivery> deliveries) {
 
         HashMap<Location, HashSet<Delivery>> sourceToDeliveries = new HashMap<>();
-//        HashMap<Location, HashSet<Delivery>> destinationToDeliveries = new HashMap<>();
+        HashMap<Location, HashSet<Delivery>> destinationToDeliveries = new HashMap<>();
+        HashMap<Delivery, Vertex<Delivery>> deliveryToVertex = new HashMap<>();
 
         // O(D)
         for (Delivery delivery: deliveries) {
-            HashSet<Delivery> sourceDeliveries = sourceToDeliveries.getOrDefault(delivery.source(), new HashSet<>());
-//            HashSet<Delivery> destinationDeliveries = destinationToDeliveries.getOrDefault(delivery.destination(), new HashSet<>());
+            HashSet<Delivery> sourceDeliveries = sourceToDeliveries.computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
+            HashSet<Delivery> destinationDeliveries = destinationToDeliveries.computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
 
             sourceDeliveries.add(delivery);
-//            destinationDeliveries.add(delivery);
+            destinationDeliveries.add(delivery);
+            deliveryToVertex.put(delivery, new Vertex<>(delivery));
         }
 
         HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> adjacency = new HashMap<>();
@@ -52,19 +54,48 @@ public class MinimumCostFinder {
         // O(D)
         for (Delivery delivery: deliveries) {
             // Worst-case O(D)
+
             HashSet<Vertex<Delivery>> candidateNeighbours = sourceToDeliveries
-                            .get(delivery.destination())
+                            .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>())
                             .stream()
-                            .filter(there -> delivery.arrival() <= there.departure())
-                            .map(there -> new Vertex(there))
+                            .filter(t -> delivery.arrival() <= t.departure())
+                            .map(t -> deliveryToVertex.get(t))
                             .collect(Collectors.toCollection(HashSet::new));
 
-            adjacency.put(new Vertex(delivery), candidateNeighbours);
+            adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours);
         }
 
-        djikstra(adjacency, sourceToDeliveries.get(source));
+        HashSet<Vertex<Delivery>> sources = sourceToDeliveries
+                .get(source)
+                .stream()
+                .filter(s -> ts <= s.departure())
+                .map(s -> deliveryToVertex.get(s))
+                .collect(Collectors.toCollection(HashSet::new));
 
-        return -2; // REMOVE THIS LINE AND IMPLEMENT THIS METHOD
+
+        djikstra(adjacency, sources);
+
+        Optional<Vertex<Delivery>> minVertex = destinationToDeliveries
+                .get(destination)
+                .stream()
+                .filter(s -> s.arrival() <= td)
+                .map(s -> deliveryToVertex.get(s))
+                .min(Comparator.comparingInt(u -> u.d));
+
+
+        Vertex<Delivery> head = minVertex.get().pi;
+        while (true) {
+            if (head != null) {
+                System.out.println(head.element);
+                head = head.pi;
+            } else {
+                break;
+            }
+        }
+
+        int cost = minVertex.get().d;
+
+        return cost == Integer.MAX_VALUE ? -1 : cost;
     }
 
     static class Priority<T> implements Comparable<Priority<T>> {
@@ -73,6 +104,7 @@ public class MinimumCostFinder {
 
         public Priority(int priority, T element) {
             this.priority = priority;
+            this.element = element;
         }
 
         @Override
@@ -139,7 +171,7 @@ public class MinimumCostFinder {
         while (!Q.isEmpty()) {
             Vertex<Delivery> u = Q.poll().element;
 
-            for (Vertex<Delivery> v: G.get(u)) {
+            for (Vertex<Delivery> v: G.computeIfAbsent(u, (k) -> new HashSet<>())) {
                 int candidateCost = u.d + v.element.cost();
 
                 if (v.d > candidateCost) {
