@@ -61,7 +61,7 @@ public class MinimumCostFinder {
             // worst-case O(D)
             HashSet<Vertex<Delivery>> candidateNeighbours = sourceToDeliveries
                             // defensive programming: cost already covered above
-                            .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>())
+                            .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>()) // O(1)
                             .stream()
                             .filter(d -> delivery.arrival() <= d.departure()) // worst-case O(D)
                             .map(d -> deliveryToVertex.get(d)) // // worst-case O(D)
@@ -70,7 +70,7 @@ public class MinimumCostFinder {
             adjacency.put(deliveryToVertex.get(delivery), candidateNeighbours); // O(1)
         }
 
-        // O(D)
+        // worst-case O(D)
         HashSet<Vertex<Delivery>> sources = sourceToDeliveries
                 .get(source) // O(1)
                 .stream()
@@ -78,9 +78,6 @@ public class MinimumCostFinder {
                 .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
 
 
-        // overall \Theta(D * lg D + E * lg D)
-        // As E is O(V^2)
-        // overall \Theta(D&2 lg V)
         dijkstra(adjacency, sources);
 
         Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationToDeliveries
@@ -123,10 +120,10 @@ public class MinimumCostFinder {
             Q.add(new Priority<>(source.d, source));
         }
 
-        // overall \Theta(D * lg D  + E * lg D)
+        // overall \Theta(V * lg V  + E * lg V)
         // |D| times
         while (!Q.isEmpty()) {
-            Vertex<Delivery> u = Q.poll().element; // // O(lg D)
+            Vertex<Delivery> u = Q.poll().element; // // O(lg V)
 
             // degree(u) times
             for (Vertex<Delivery> v: G.computeIfAbsent(u, (k) -> new HashSet<>())) {
@@ -134,7 +131,7 @@ public class MinimumCostFinder {
 
                 if (v.d > candidateCost) {
                     v.d = candidateCost;
-                    Q.add(new Priority<>(v.d, v)); // O(lg D)
+                    Q.add(new Priority<>(v.d, v)); // O(lg V)
                     v.pi = u;
                 }
             }

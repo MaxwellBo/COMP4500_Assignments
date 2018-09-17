@@ -70,9 +70,26 @@ The tree rooted with $1$ was constructed first, and the tree rooted with $0$ was
 
 \newpage
 
+\subsection*{Question 3: Design and implement a solution}
+
+\subsection*{Question 4: Worst-case complexity analysis}
+
+
+\subsubsection*{(a)}
+
+Rather than treating each $\mathcal{P}$ as a node, and each $\mathcal{D}$ as an edge in a graph, this algorithm treats each $\mathcal{D}$ as a node. 
+
+A valid edge betwen two $\mathcal{D}$ constitutes a two element sub-path of a possible route from $P_s$ to $P_d$.
+
+
 \begingroup
 \fontsize{11pt}{11pt}\selectfont
 \verbatiminput{pseudo.py} 
 \endgroup
 
 \end{document}
+
+
+\subsubsection*{(b)}
+
+We assume that \texttt{HashSet} and \texttt{HashMap} never degenerate into $O(n)$ \texttt{put}s, \texttt{get}s, \texttt{add}s and \texttt{next}s, and choose the $O(1)$ best case scenario.
