@@ -2,7 +2,8 @@ import networkx as nx
 from collections import namedtuple
 import os
 
-G = nx.DiGraph()
+G = nx.DiGraph(name="G")
+GT = nx.DiGraph(name="GT")
 
 sni = "984392687152"
 
@@ -52,12 +53,16 @@ critical_edges = []
 
 for (k, v) in NODES.items():
     G.add_node(v)
+    GT.add_node(v)
 
 for (u, v) in zip(sni[:-1], sni[1:]):
     G.add_edge(NODES[u], NODES[v])
+    GT.add_edge(NODES[v], NODES[u])
 
-def dump_graph(G, t):
-    with open(f"graphs/{t}.txt", "w") as f:
+def dump_graph(G, t, without_backedges=False):
+    tag = G.graph["name"]
+
+    with open(f"graphs/{tag}-{t}.txt", "w") as f:
 
         f.write("digraph G {\n")
 
@@ -74,7 +79,7 @@ def dump_graph(G, t):
                     h=u.uid,
                     t=v.uid
                 ))
-            else:
+            elif not without_backedges:
                 f.write("{h} -> {t}\n".format(
                     h=u.uid,
                     t=v.uid
@@ -82,15 +87,21 @@ def dump_graph(G, t):
         f.write("}\n")
 
 
-    os.system(f"dot -Tpng graphs/{t}.txt > images/{t}.png")
+    os.system(f"dot -Tpng graphs/{tag}-{t}.txt > images/{tag}-{t}.png")
 
-# dump_graph(G)
+dump_graph(G, "graph")
+dump_graph(GT, "transpose")
 
 time = 0
 
-def dfs(G):
-    for u in sorted(G.nodes, key=lambda x: x.uid):
+def dfs(G, key):
+    for u in G.nodes:
+        u.color = "WHITE"
+        u.pi = None
+
+    for u in sorted(G.nodes, key=key):
         if u.color == "WHITE":
+            print(u)
             dfs_visit(G, u)
 
 def dfs_visit(G, u):
@@ -100,7 +111,7 @@ def dfs_visit(G, u):
     u.color = "GRAY"
     dump_graph(G, time)
 
-    for v in G.successors(u):
+    for v in sorted(G.successors(u), key=lambda x: x.uid):
         if v.color == "WHITE":
             v.pi = u
             critical_edges.append((u.uid, v.uid))
@@ -111,6 +122,13 @@ def dfs_visit(G, u):
     u.f = time
     dump_graph(G, time)
 
-dfs(G)
+print("Doing G")
+dfs(G, key=lambda x: x.uid)
+print("Doing GT")
+dfs(GT, key=lambda x: -x.f)
+
+dump_graph(GT, "trees", without_backedges=True)
+
+
 
 # nx.draw_networkx(G)
