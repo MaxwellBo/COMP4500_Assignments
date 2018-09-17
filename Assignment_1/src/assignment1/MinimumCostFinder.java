@@ -79,6 +79,8 @@ public class MinimumCostFinder {
 
 
         // overall \Theta(D * lg D + E * lg D)
+        // As E is O(V^2)
+        // overall \Theta(D&2 lg V)
         djikstra(adjacency, sources);
 
         Optional<Vertex<Delivery>> minVertex = destinationToDeliveries
@@ -106,6 +108,36 @@ public class MinimumCostFinder {
 //        }
 
             return cost == Integer.MAX_VALUE ? -1 : cost;
+        }
+    }
+
+    public static void djikstra(
+            HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> G,
+            HashSet<Vertex<Delivery>> sources
+    ) {
+        PriorityQueue<Priority<Vertex<Delivery>>> Q = new PriorityQueue<>();
+
+        // O(D)
+        for (Vertex<Delivery> source: sources) {
+            source.d = source.element.cost();
+            Q.add(new Priority<>(source.d, source));
+        }
+
+        // overall \Theta(D * lg D  + E * lg D)
+        // |D| times
+        while (!Q.isEmpty()) {
+            Vertex<Delivery> u = Q.poll().element; // // O(lg D)
+
+            // degree(u) times
+            for (Vertex<Delivery> v: G.computeIfAbsent(u, (k) -> new HashSet<>())) {
+                int candidateCost = u.d + v.element.cost();
+
+                if (v.d > candidateCost) {
+                    v.d = candidateCost;
+                    Q.add(new Priority<>(v.d, v)); // O(lg D)
+                    v.pi = u;
+                }
+            }
         }
     }
 
@@ -166,37 +198,4 @@ public class MinimumCostFinder {
 
     }
 
-    public static void djikstra(
-            HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> G,
-            HashSet<Vertex<Delivery>> sources
-    ) {
-        PriorityQueue<Priority<Vertex<Delivery>>> Q = new PriorityQueue<>();
-
-        // O(D)
-        for (Vertex<Delivery> source: sources) {
-            source.d = source.element.cost();
-            Q.add(
-                    new Priority<>(source.d, source)
-            );
-        }
-
-        // overall \Theta(D * lg D  + E * lg D)
-        // |D| times
-        while (!Q.isEmpty()) {
-            // O(lg D)
-            Vertex<Delivery> u = Q.poll().element;
-
-            // degree(u) times
-            for (Vertex<Delivery> v: G.computeIfAbsent(u, (k) -> new HashSet<>())) {
-                int candidateCost = u.d + v.element.cost();
-
-                if (v.d > candidateCost) {
-                    v.d = candidateCost;
-                    // O(lg D)
-                    Q.add(new Priority<>(v.d, v));
-                    v.pi = u;
-                }
-            }
-        }
-    }
 }
