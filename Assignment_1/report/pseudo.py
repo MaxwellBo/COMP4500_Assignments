@@ -1,8 +1,7 @@
 def findMinimumCost(locations, source, ts, destination, td,  deliveries):
     sourceToDeliveries: HashMap<Location, HashSet<Delivery>> = 
         new HashMap().onLookupFail(new HashSet())
-    destinationToDeliveries: HashMap<Location, HashSet<Delivery>> = 
-        new HashMap().onLookupFail(new HashSet())
+    destinationDeliveries: HashSet<Delivery> = new HashSet()
 
     # D iterations
     # O(1) loop body
@@ -15,11 +14,10 @@ def findMinimumCost(locations, source, ts, destination, td,  deliveries):
         # foreach P, we construct a HashSet, if the P lookup fails
         sourceDeliveries: HashSet<Delivery> = 
             sourceToDeliveries[delivery.source] # O(1)
-        destinationDeliveries: HashSet<Delivery> = 
-            destinationToDeliveries[delivery.destination] # O(1)
 
         sourceDeliveries.add(delivery) # O(1)
-        destinationDeliveries.add(delivery) # O(1)
+        if delivery.destination == destination:
+            destinationDeliveries.add(delivery) # O(1)
 
     adjacency: HashMap<Delivery, HashSet<Delivery>> = 
         new HashMap().onLookupFail(new HashSet())

@@ -35,8 +35,8 @@ public class MinimumCostFinder {
             int ts, Location destination, int td, List<Delivery> deliveries) {
 
         HashMap<Location, HashSet<Delivery>> sourceToDeliveries = new HashMap<>();
-        HashMap<Location, HashSet<Delivery>> destinationToDeliveries = new HashMap<>();
         HashMap<Delivery, Vertex<Delivery>> deliveryToVertex = new HashMap<>();
+        HashSet<Delivery> destinationDeliveries = new HashSet<>();
 
         // D iterations
         // O(1) loop body
@@ -50,13 +50,13 @@ public class MinimumCostFinder {
             HashSet<Delivery> sourceDeliveries =
                 sourceToDeliveries
                     .computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
-            HashSet<Delivery> destinationDeliveries =
-                destinationToDeliveries
-                    .computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
 
             sourceDeliveries.add(delivery); // O(1)
-            destinationDeliveries.add(delivery); // O(1)
             deliveryToVertex.put(delivery, new Vertex<>(delivery)); // O(1)
+
+            if (delivery.destination().equals(destination)) {
+                destinationDeliveries.add(delivery); // O(1)
+            }
         }
 
         HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> adjacency = new HashMap<>();
@@ -95,12 +95,10 @@ public class MinimumCostFinder {
         dijkstra(adjacency, sources);
 
         // O(D)
-        Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationToDeliveries
-            .get(destination) // O(1)
+        Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationDeliveries
             .stream()
             .map(d -> deliveryToVertex.get(d)) // worst-case O(D)
             .min(Comparator.comparingInt(v -> v.d)); // worst-case O(D - 1)
-
 
         // O(1)
         if (!lowestDDestinationVertex.isPresent()) {
