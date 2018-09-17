@@ -1,15 +1,9 @@
 package assignment1;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MinimumCostFinder {
-
-
-    public String deriveSNI(String studentNumber) {
-        // No successive digits are identitcal, so initial input number is the
-        // same as SNI
-        return "98" + studentNumber + "52";
-    }
 
     /**
      * @require The set of locations, locations, is not null and each location
@@ -40,20 +34,44 @@ public class MinimumCostFinder {
     public static int findMinimumCost(Set<Location> locations, Location source,
             int ts, Location destination, int td, List<Delivery> deliveries) {
 
-        for (Delivery delivery: deliveries) {
+        HashMap<Location, HashSet<Delivery>> sourceToDeliveries = new HashMap<>();
+//        HashMap<Location, HashSet<Delivery>> destinationToDeliveries = new HashMap<>();
 
+        // O(D)
+        for (Delivery delivery: deliveries) {
+            HashSet<Delivery> sourceDeliveries = sourceToDeliveries.getOrDefault(delivery.source(), new HashSet<>());
+//            HashSet<Delivery> destinationDeliveries = destinationToDeliveries.getOrDefault(delivery.destination(), new HashSet<>());
+
+            sourceDeliveries.add(delivery);
+//            destinationDeliveries.add(delivery);
         }
 
+        HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> adjacency = new HashMap<>();
+
+        // Total O(D^2)
+        // O(D)
+        for (Delivery delivery: deliveries) {
+            // Worst-case O(D)
+            HashSet<Vertex<Delivery>> candidateNeighbours = sourceToDeliveries
+                            .get(delivery.destination())
+                            .stream()
+                            .filter(there -> delivery.arrival() <= there.departure())
+                            .map(there -> new Vertex(there))
+                            .collect(Collectors.toCollection(HashSet::new));
+
+            adjacency.put(new Vertex(delivery), candidateNeighbours);
+        }
+
+        djikstra(adjacency, sourceToDeliveries.get(source));
 
         return -2; // REMOVE THIS LINE AND IMPLEMENT THIS METHOD
     }
 
-
-    class Priority<T> implements Comparable<Priority<T>> {
+    static class Priority<T> implements Comparable<Priority<T>> {
         public int priority;
         public T element;
 
-        public Priority(int priority) {
+        public Priority(int priority, T element) {
             this.priority = priority;
         }
 
@@ -77,39 +95,59 @@ public class MinimumCostFinder {
         }
     }
 
-    class Vertex<T> {
-        public T t;
+    static class Vertex<T> {
+        public T element;
         public int d;
         public Vertex<T> pi;
 
-        public Vertex(T t) {
-            this.t = t;
+        public Vertex(T element) {
+            this.element = element;
             this.d = Integer.MAX_VALUE;
             this.pi = null;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Vertex<?> vertex = (Vertex<?>) o;
+
+            return element != null ? element.equals(vertex.element) : vertex.element == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return element != null ? element.hashCode() : 0;
+        }
+
     }
 
+    public static void djikstra(
+            HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> G,
+            HashSet<Vertex<Delivery>> sources
+    ) {
+        PriorityQueue<Priority<Vertex<Delivery>>> Q = new PriorityQueue<>();
 
-    public void djikstra(Location source, Location destination) {
-        PriorityQueue<Priority<Delivery>> frontier = new PriorityQueue<>();
-//        frontier.put(start, 0)
-//        came_from = {}
-//        cost_so_far = {}
-//        came_from[start] = None
-//        cost_so_far[start] = 0
-//
-//        while not frontier.empty():
-//        current = frontier.get()
-//
-//        if current == goal:
-//        break
-//
-//        for next in graph.neighbors(current):
-//        new_cost = cost_so_far[current] + graph.cost(current, next)
-//        if next not in cost_so_far or new_cost < cost_so_far[next]:
-//        cost_so_far[next] = new_cost
-//        priority = new_cost
-//        frontier.put(next, priority)
-//        came_from[next] = current
+        for (Vertex<Delivery> source: sources) {
+            source.d = source.element.cost();
+            Q.add(
+                    new Priority<>(source.d, source)
+            );
+        }
+
+        while (!Q.isEmpty()) {
+            Vertex<Delivery> u = Q.poll().element;
+
+            for (Vertex<Delivery> v: G.get(u)) {
+                int candidateCost = u.d + v.element.cost();
+
+                if (v.d > candidateCost) {
+                    v.d = candidateCost;
+                    Q.add(new Priority<>(v.d, v));
+                    v.pi = u;
+                }
+            }
+        }
     }
 }
