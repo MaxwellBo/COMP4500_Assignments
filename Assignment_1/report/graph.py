@@ -6,6 +6,12 @@ G = nx.DiGraph()
 
 sni = "984392687152"
 
+COLOR_LOOKUP_MAP = {
+    "WHITE": "white",
+    "GRAY": "yellow",
+    "BLACK": "gray"
+}
+
 class Node(object):
     def __init__(self, uid):
         self.uid = uid
@@ -31,60 +37,79 @@ class Node(object):
     def __hash__(self):
         return hash(self.uid)
 
+    def __eq__(self, other):
+        return self.uid == other.uid
+
+
+    def __str__(self):
+        return f"{self.uid} {self.color} {self.pi.uid if self.pi else 'none'} {self.d} {self.f}"
+
+
+NODES = { k: Node(k) for k in "0123456789" }
+
+
+critical_edges = []
+
+for (k, v) in NODES.items():
+    G.add_node(v)
 
 for (u, v) in zip(sni[:-1], sni[1:]):
-    G.add_edge(Node(u), Node(v))
-
-
+    G.add_edge(NODES[u], NODES[v])
 
 def dump_graph(G, t):
-    with open(f"{t}.graph", "w") as f:
+    with open(f"graphs/{t}.txt", "w") as f:
 
         f.write("digraph G {\n")
 
         for u in G.nodes:
-            # print("{} [fillcolor=\"{}\", style=\"filled\"]".format(u.uid, u.color.lower()))
             f.write("{} [fillcolor=\"{}\", style=\"filled\", shape=\"record\", label=\"{}\"]\n".format(
                 u.uid,
-                "yellow",
+                COLOR_LOOKUP_MAP[u.color],
                 u.gen_label()
                 ))
 
         for (u, v) in G.edges:
-            f.write("{h} -> {t}\n".format(
-                h=u.uid,
-                t=v.uid
-            ))
-        f.write("0\n")
+            if (u.uid, v.uid) in critical_edges:
+                f.write("{h} -> {t} [penwidth=5.0]\n".format(
+                    h=u.uid,
+                    t=v.uid
+                ))
+            else:
+                f.write("{h} -> {t}\n".format(
+                    h=u.uid,
+                    t=v.uid
+                ))
         f.write("}\n")
 
 
-    os.system(f"dot -Tpng {t}.graph > {t}.png")
+    os.system(f"dot -Tpng graphs/{t}.txt > images/{t}.png")
 
 # dump_graph(G)
 
 time = 0
 
 def dfs(G):
-    for u in G.nodes:
+    for u in sorted(G.nodes, key=lambda x: x.uid):
         if u.color == "WHITE":
             dfs_visit(G, u)
 
 def dfs_visit(G, u):
     global time
     time = time + 1
-    dump_graph(G, time)
     u.d = time
     u.color = "GRAY"
+    dump_graph(G, time)
 
     for v in G.successors(u):
         if v.color == "WHITE":
             v.pi = u
+            critical_edges.append((u.uid, v.uid))
             dfs_visit(G, v)
 
     u.color = "BLACK"
     time = time + 1
     u.f = time
+    dump_graph(G, time)
 
 dfs(G)
 
