@@ -75,21 +75,26 @@ The tree rooted with $1$ was constructed first, and the tree rooted with $0$ was
 \subsection*{Question 4: Worst-case complexity analysis}
 
 
-\subsubsection*{(a)}
+\subsubsection*{(a) and (b) combined}
 
 Rather than treating each $\mathcal{P}$ as a node, and each $\mathcal{D}$ as an edge in a graph, this algorithm treats each $\mathcal{D}$ as a node. 
 
 A valid edge betwen two $\mathcal{D}$ constitutes a two element sub-path of a possible route from $P_s$ to $P_d$.
 
+\newpage
 
 \begingroup
 \fontsize{11pt}{11pt}\selectfont
 \verbatiminput{pseudo.py} 
 \endgroup
 
-\end{document}
-
-
 \subsubsection*{(b)}
 
-We assume that \texttt{HashSet} and \texttt{HashMap} never degenerate into $O(n)$ \texttt{put}s, \texttt{get}s, \texttt{add}s and \texttt{next}s, and choose the $O(1)$ best case scenario.
+The time complexity of Dijkstra's algorithm, $\Theta(\mathcal{D}^2 \lg \mathcal{D})$, dominates all other parts of our algorithm ($O(\mathcal{D})$, $O(\mathcal{D}^2)$, $O(\mathcal{D})$, $O(\mathcal{\vert D \vert - 1})$), as well as providing the tightest upper and lower-bound.
+
+
+Thus, the time complexity is $\Theta(\mathcal{D}^2 * \lg \mathcal{D})$.
+
+We assume that \texttt{HashSet} and \texttt{HashMap} never degenerate into $O(n)$ \texttt{put}s, \texttt{get}s, \texttt{add}s and \texttt{next}s, and choose the $O(1)$ best case scenario. We use a Binary Heap in the implementation of Dijkstra's, with $O(\lg V)$ \texttt{Extract-Min}s and \texttt{Decrease-Key}s.
+
+\end{document}
