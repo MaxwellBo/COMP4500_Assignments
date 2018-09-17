@@ -39,11 +39,14 @@ public class MinimumCostFinder {
         HashMap<Delivery, Vertex<Delivery>> deliveryToVertex = new HashMap<>();
 
         // D iterations
-        // O(1) loop cost
-        // all-case O(P) HashSet construction cost, handshake lemma
+        // O(1) loop body
+        // O(P) HashSet construction cost, due to handshake lemma
         // Overall: O(D + P)
+        // Worst-case: |P| = 2 * |D|, 
+        //   if each delivery bridges two unique locations
+        // Overall: O(D)
         for (Delivery delivery: deliveries) {
-            // for each P, we construct a HashSet
+            // foreach P, we construct a HashSet, if the P lookup fails
             HashSet<Delivery> sourceDeliveries = sourceToDeliveries.computeIfAbsent(delivery.source(), (k) -> new HashSet<>());
             HashSet<Delivery> destinationDeliveries = destinationToDeliveries.computeIfAbsent(delivery.destination(), (k) -> new HashSet<>());
 
@@ -55,7 +58,8 @@ public class MinimumCostFinder {
         HashMap<Vertex<Delivery>, HashSet<Vertex<Delivery>>> adjacency = new HashMap<>();
 
         // D iterations
-        // O(D) loop cost
+        // Worst-case: O(D) loop body, 
+        //   if successive locations always depart after predecessor arrival
         // Overall: O(D^2)
         for (Delivery delivery: deliveries) {
             // worst-case O(D)
@@ -78,8 +82,15 @@ public class MinimumCostFinder {
                 .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
 
 
+        // djikstras is \Theta(V * lg V + E * lg V),
+        // As E is worst-case O(V^2), substituting, we get
+        // \Theta(V * lg V + V^2 * lg V)
+        // As our Ds are vertexes in our use of Djikstras algorithm, we get
+        // Overall: \Theta(D * lg D + D^2 * lg D), which is
+        // Overall: \Theta(D^2 * lg D)
         dijkstra(adjacency, sources);
 
+        // O(D)
         Optional<Vertex<Delivery>> lowestDDestinationVertex = destinationToDeliveries
                 .get(destination) // O(1)
                 .stream()
