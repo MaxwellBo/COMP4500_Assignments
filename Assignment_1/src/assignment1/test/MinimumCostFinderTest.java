@@ -6,6 +6,8 @@ import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * Basic tests for the {@link MinimumCostFinder} implementation class.
  * 
@@ -221,6 +223,47 @@ public class MinimumCostFinderTest {
 
         // compare the actual and expected outputs
         Assert.assertEquals(expectedCost, actualCost);
+    }
+
+    private Delivery genRandomDelivery(List<Location> locations) {
+        int source = ThreadLocalRandom.current().nextInt(0, locations.size());
+        int destination = ThreadLocalRandom.current().nextInt(0, locations.size());
+        int departure = ThreadLocalRandom.current().nextInt(0, 47);
+        int arrival = ThreadLocalRandom.current().nextInt(departure + 1, 48);
+        int cost = ThreadLocalRandom.current().nextInt(0, 100);
+
+        return getDelivery(locations, source,  destination, departure, arrival, cost);
+    }
+
+    @Test
+    public void generatedTest() {
+        /* Initialise parameters to the test. */
+
+        // number of locations
+        int n = 10000000;
+        // create n locations so that location.get(i) has identifier i
+        List<Location> locations = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            locations.add(new Location(i));
+        }
+        Location source = locations.get(0);
+        int ts = 0;
+        Location destination = locations.get(5);
+        int td = 48;
+        List<Delivery> deliveries = new ArrayList<>();
+        for (int i = 0; i < 100000; i++) {
+            deliveries.add(genRandomDelivery(locations));
+
+        }
+        /* Run method on inputs and test result. */
+
+        // the actual cost returned
+        int actualCost = MinimumCostFinder.findMinimumCost(
+                new HashSet<Location>(locations), source, ts, destination, td,
+                deliveries);
+
+        // compare the actual and expected outputs
+//        Assert.assertEquals(expectedCost, actualCost);
     }
 
     /*---Helper methods--------------------*/

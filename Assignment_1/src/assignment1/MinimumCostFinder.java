@@ -80,7 +80,8 @@ public class MinimumCostFinder {
 
         // worst-case O(D)
         HashSet<Vertex<Delivery>> sources = sourceToDeliveries
-            .get(source) // O(1)
+            // defensive programming: cost already covered above
+            .computeIfAbsent(source, (k) -> new HashSet<>())
             .stream()
             .map(s -> deliveryToVertex.get(s)) // worst-case O(D)
             .collect(Collectors.toCollection(HashSet::new)); // worst-case O(D)
