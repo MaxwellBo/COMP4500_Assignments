@@ -88,11 +88,11 @@ A valid edge betwen two $\mathcal{D}$ constitutes a two element sub-path of a po
 
 \subsubsection*{(b)}
 
-The time complexity of Dijkstra's algorithm, $\Theta(\mathcal{D}^2 \lg \mathcal{D})$, dominates all other parts of our algorithm ($O(\mathcal{D})$, $O(\mathcal{D}^2)$, $O(\mathcal{D})$, $O(\vert\mathcal{D} \vert - 1)$), as well as providing the tightest upper and lower-bound.
+The time complexity of Dijkstra's algorithm, $\Theta(\mathcal{D}^2)$, dominates, or is of the same class, as all other parts of our algorithm ($O(\mathcal{D})$, $O(\mathcal{D}^2)$, $O(\mathcal{D})$, $O(\mathcal{D})$), as well as providing a lower-bound.
 
-Thus, the time complexity is $\Theta(\mathcal{D}^2 \lg \mathcal{D})$ which describes both an asymptotic upper and lower bound on the worst case time complexity of this algorithm.
+Thus, the time complexity is $\Theta(\mathcal{D}^2)$ which describes both an asymptotic upper and lower bound on the worst case time complexity of this algorithm.
 
-We assume that \texttt{HashSet} and \texttt{HashMap} never degenerate into $O(n)$ \texttt{put}s, \texttt{get}s, \texttt{add}s and \texttt{next}s, and choose the $O(1)$ best case scenario. We use a Binary Heap in the implementation of Dijkstra's, with $O(\lg V)$ \texttt{Extract-Min}s and \texttt{Decrease-Key}s.
+We assume that \texttt{HashSet} and \texttt{HashMap} never degenerate into $O(n)$ \texttt{put}s, \texttt{get}s, \texttt{add}s and \texttt{Iterator::next}s, and choose the $O(1)$ best case scenario. We use a Binary Heap in the implementation of Dijkstra's, with $O(\lg V)$ \texttt{Extract-Min}s and \texttt{Decrease-Key}s.
 
 A $\mathcal{D}$ that describes a complete graph of valid delivery sequencing would exploit the worst-case complexity of this algorithm.
 

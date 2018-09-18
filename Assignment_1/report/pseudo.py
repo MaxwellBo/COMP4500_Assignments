@@ -38,13 +38,13 @@ def findMinimumCost(locations, source, ts, destination, td,  deliveries):
 
     # djikstras is \Theta(V * lg V + E * lg V),
     # As E is worst-case O(V^2), substituting, we get
-    # \Theta(V * lg V + V^2 * lg V)
+    # \Theta(V * lg V + V^2 * lg V), which is
+    # \Theta(V^2)
     # As our Ds are vertexes in our use of Djikstras algorithm, we get
-    # Overall: \Theta(D * lg D + D^2 * lg D), which is
-    # Overall: \Theta(D^2 * lg D)
+    # Overall: \Theta(D^2)
     dijkstra(G = adjacency, sources)
 
-    # O(|D|-1)
+    # O(D)
     minimumCost: Int = destinationToDeliveries[destination].minBy(d -> d.d).d
 
     return cost == inf ? -1 : cost
