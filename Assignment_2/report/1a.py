@@ -1,14 +1,12 @@
 from typing import List
 
 def min_order(H: int, requests: List[int]) -> List[int]:
-    sorted_requests = sorted(requests)
-
-    midpoint = (sorted_requests[0] + sorted_requests[1]) / 2
+    midpoint = (min(requests) + max(requests)) / 2
 
     if H <= midpoint:
-        return sorted_requests
+        return sorted(requests)
     else:
-        return sorted_requests[::-1] # reversed
+        return sorted(requests, reverse=True)
 
 def min_time(H: int, ordering: List[int]) -> int:
     seek_to_start = abs(ordering[0] - H)
