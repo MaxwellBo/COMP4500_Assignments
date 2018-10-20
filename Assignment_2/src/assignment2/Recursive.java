@@ -89,22 +89,22 @@ public class Recursive {
 
         int cost = data[d] - capacity;
 
-        int partialRebootValue = optimalCostRecursive(
-                fullRebootCapacity,
-                partialRebootCapacity,
-                data,
-                d + 1, // increment d
-                Activity.PARTIAL_REBOOT, // change the lastActivity and reset i
-                0
-        );
-
         int fullRebootValue = optimalCostRecursive(
                 fullRebootCapacity,
                 partialRebootCapacity,
                 data,
                 d + 1, // increment d
-                Activity.FULL_REBOOT, // change the lastActivity and reset i
-                0
+                Activity.FULL_REBOOT, // change the lastActivity...
+                0 // ...and reset i
+        );
+
+        int partialRebootValue = optimalCostRecursive(
+                fullRebootCapacity,
+                partialRebootCapacity,
+                data,
+                d + 1, // increment d
+                Activity.PARTIAL_REBOOT, // change the lastActivity...
+                0 // ...and reset i
         );
 
         int noRebootValue = optimalCostRecursive(

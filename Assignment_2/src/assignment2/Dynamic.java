@@ -1,8 +1,41 @@
 package assignment2;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Dynamic {
+
+    static class State {
+        int d;
+        Activity lastActivity;
+        int i;
+
+        public State(int d, Activity lastActivity, int i) {
+            this.d = d;
+            this.lastActivity = lastActivity;
+            this.i = i;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            State state = (State) o;
+
+            if (d != state.d) return false;
+            if (i != state.i) return false;
+            return lastActivity == state.lastActivity;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = d;
+            result = 31 * result + lastActivity.hashCode();
+            result = 31 * result + i;
+            return result;
+        }
+    }
 
     /**
      * Returns the least cost that can be incurred by your company over the k =
@@ -31,7 +64,67 @@ public class Dynamic {
      */
     public static int optimalCostDynamic(int[] fullRebootCapacity,
             int[] partialRebootCapacity, int[] data) {
-        return -1; // REMOVE THIS LINE AND WRITE THIS METHOD
+
+        // values are optimum costs
+        HashMap<State, Integer> table = new HashMap<>();
+
+        ArrayList<Activity> activities = new ArrayList<>();
+        activities.add(Activity.FULL_REBOOT);
+        activities.add(Activity.PARTIAL_REBOOT);
+
+        int k = data.length;
+        int lastDay = k - 1;
+
+        for (int d = lastDay; d >= 0; d--) {
+            // our last reboot can always be the day before we started (hence the i < d + 1)
+            for (int i = 0; i <= d + 1; i++) {
+                for (Activity lastActivity: activities) {
+                    int capacity = lastActivity.equals(Activity.FULL_REBOOT)
+                            ? (i < fullRebootCapacity.length) // take the last element if i is OOB
+                                ? fullRebootCapacity[i]
+                                : fullRebootCapacity[fullRebootCapacity.length - 1]
+                            : (i < partialRebootCapacity.length) // take the last element if i is OOB
+                                ? partialRebootCapacity[i]
+                                : partialRebootCapacity[partialRebootCapacity.length - 1];
+
+                    int cost = data[d] - capacity;
+
+                    int defaultValue = 0; // if (d == k) { return 0 }
+
+                    int partialRebootValue = table.getOrDefault(new State(
+                            d + 1, // increment d
+                            Activity.PARTIAL_REBOOT, // change the lastActivity...
+                            0 // ... and reset i
+                    ), defaultValue);
+
+                    int fullRebootValue = table.getOrDefault(new State(
+                            d + 1, // increment d
+                            Activity.FULL_REBOOT, // change the lastActivity...
+                            0 // ...and reset i
+                    ), defaultValue);
+
+                    int noRebootValue = table.getOrDefault(new State(
+                            d + 1, // increment d
+                            lastActivity, // persist the lastActivity
+                            i + 1 // increment i
+                    ), defaultValue);
+
+                    int minCost = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
+                            .min(Integer::compare)
+                            .get();
+
+                    State key = new State(d, lastActivity, i);
+                    table.put(key, cost + minCost);
+
+                    // if we just assembled our root node of our tree, return the cost
+                    if (key.equals(new State(0, Activity.FULL_REBOOT, 1))) {
+                        return cost + minCost;
+                    }
+                }
+            }
+        }
+        
+        return 0;
     }
 
     /**
