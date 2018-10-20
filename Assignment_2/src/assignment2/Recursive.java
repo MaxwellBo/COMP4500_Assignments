@@ -89,7 +89,7 @@ public class Recursive {
 
         int cost = data[d] - capacity;
 
-        int fullRebootValue = optimalCostRecursive(
+        int fullRebootCost = optimalCostRecursive(
                 fullRebootCapacity,
                 partialRebootCapacity,
                 data,
@@ -98,7 +98,7 @@ public class Recursive {
                 0 // ...and reset i
         );
 
-        int partialRebootValue = optimalCostRecursive(
+        int partialRebootCost = optimalCostRecursive(
                 fullRebootCapacity,
                 partialRebootCapacity,
                 data,
@@ -107,7 +107,7 @@ public class Recursive {
                 0 // ...and reset i
         );
 
-        int noRebootValue = optimalCostRecursive(
+        int noRebootCost = optimalCostRecursive(
                 fullRebootCapacity,
                 partialRebootCapacity,
                 data,
@@ -117,7 +117,7 @@ public class Recursive {
         );
 
 
-        int minCost = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
+        int minCost = Stream.of(partialRebootCost, fullRebootCost, noRebootCost)
                              .min(Integer::compare)
                              .get();
 

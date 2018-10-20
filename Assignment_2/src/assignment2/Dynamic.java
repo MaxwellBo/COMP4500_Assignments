@@ -4,6 +4,19 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class Dynamic {
+    static class Entry {
+        int cost;
+        Activity activity;
+
+        public Entry(int cost, Activity activity) {
+            this.cost = cost;
+            this.activity = activity;
+        }
+
+        public int getCost() {
+            return cost;
+        }
+    }
 
     static class State {
         int d;
@@ -14,6 +27,11 @@ public class Dynamic {
             this.d = d;
             this.lastActivity = lastActivity;
             this.i = i;
+        }
+
+
+        public State transition(Activity activity) {
+
         }
 
         @Override
@@ -37,36 +55,11 @@ public class Dynamic {
         }
     }
 
-    /**
-     * Returns the least cost that can be incurred by your company over the k =
-     * data.length days (i.e. day 0 to day k-1) that you operate the HPCS
-     * system, given that a full reboot took place the day before you were put
-     * in charge of the system (i.e. 1 day before day 0), and given parameters
-     * fullRebootCapacity, partialRebootCapacity and data.
-     * 
-     * (See handout for details.)
-     * 
-     * This method must be implemented using an efficient bottom-up dynamic
-     * programming solution to the problem (not memoised).
-     * 
-     * @require The arrays fullRebootCapacity, partialRebootCapacity and data
-     *          are not null, and do not contain null values. Each of the
-     *          integer values in those arrays are greater than or equal to zero
-     *          (i.e. they are non-negative). fullRebootCapacity.length > 0 and
-     *          partialRebootCapacity.length > 0
-     * 
-     * @ensure Returns the least cost that can be incurred by your company over
-     *         the k = data.length days (i.e. day 0 to day k-1) that you operate
-     *         the HPCS system, given that a full reboot took place the day
-     *         before you were put in charge of the system (i.e. 1 day before
-     *         day 0), and given parameters fullRebootCapacity,
-     *         partialRebootCapacity and data.
-     */
-    public static int optimalCostDynamic(int[] fullRebootCapacity,
+    public static HashMap<State, Entry> buildTable(int[] fullRebootCapacity,
             int[] partialRebootCapacity, int[] data) {
 
         // values are optimum costs
-        HashMap<State, Integer> table = new HashMap<>();
+        HashMap<State, Entry> table = new HashMap<>();
 
         ArrayList<Activity> activities = new ArrayList<>();
         activities.add(Activity.FULL_REBOOT);
@@ -81,50 +74,81 @@ public class Dynamic {
                 for (Activity lastActivity: activities) {
                     int capacity = lastActivity.equals(Activity.FULL_REBOOT)
                             ? (i < fullRebootCapacity.length) // take the last element if i is OOB
-                                ? fullRebootCapacity[i]
-                                : fullRebootCapacity[fullRebootCapacity.length - 1]
+                            ? fullRebootCapacity[i]
+                            : fullRebootCapacity[fullRebootCapacity.length - 1]
                             : (i < partialRebootCapacity.length) // take the last element if i is OOB
-                                ? partialRebootCapacity[i]
-                                : partialRebootCapacity[partialRebootCapacity.length - 1];
+                            ? partialRebootCapacity[i]
+                            : partialRebootCapacity[partialRebootCapacity.length - 1];
 
                     int cost = data[d] - capacity;
 
-                    int defaultValue = 0; // if (d == k) { return 0 }
+                    Entry defaultValue = new Entry(0, null); // if (d == k) { return 0 }
 
-                    int partialRebootValue = table.getOrDefault(new State(
-                            d + 1, // increment d
-                            Activity.PARTIAL_REBOOT, // change the lastActivity...
-                            0 // ... and reset i
-                    ), defaultValue);
-
-                    int fullRebootValue = table.getOrDefault(new State(
+                    int fullRebootCost = table.getOrDefault(new State(
                             d + 1, // increment d
                             Activity.FULL_REBOOT, // change the lastActivity...
                             0 // ...and reset i
-                    ), defaultValue);
+                    ), defaultValue).cost;
 
-                    int noRebootValue = table.getOrDefault(new State(
+                    int partialRebootCost = table.getOrDefault(new State(
+                            d + 1, // increment d
+                            Activity.PARTIAL_REBOOT, // change the lastActivity...
+                            0 // ... and reset i
+                    ), defaultValue).cost;
+
+                    int noRebootCost = table.getOrDefault(new State(
                             d + 1, // increment d
                             lastActivity, // persist the lastActivity
                             i + 1 // increment i
-                    ), defaultValue);
+                    ), defaultValue).cost;
 
-                    int minCost = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
-                            .min(Integer::compare)
-                            .get();
+                    Entry minEntry = Stream.of(
+                            new Entry(fullRebootCost, Activity.FULL_REBOOT),
+                            new Entry(partialRebootCost, Activity.PARTIAL_REBOOT),
+                            new Entry(noRebootCost, null)
+                    ).min(Comparator.comparing(Entry::getCost))
+                    .get();
 
                     State key = new State(d, lastActivity, i);
-                    table.put(key, cost + minCost);
-
-                    // if we just assembled our root node of our tree, return the cost
-                    if (key.equals(new State(0, Activity.FULL_REBOOT, 1))) {
-                        return cost + minCost;
-                    }
+                    table.put(key, new Entry(cost + minEntry.cost, minEntry.activity));
                 }
             }
         }
-        
-        return 0;
+
+        return table;
+    }
+
+    /**
+     * Returns the least cost that can be incurred by your company over the k =
+     * data.length days (i.e. day 0 to day k-1) that you operate the HPCS
+     * system, given that a full reboot took place the day before you were put
+     * in charge of the system (i.e. 1 day before day 0), and given parameters
+     * fullRebootCapacity, partialRebootCapacity and data.
+     *
+     * (See handout for details.)
+     *
+     * This method must be implemented using an efficient bottom-up dynamic
+     * programming solution to the problem (not memoised).
+     *
+     * @require The arrays fullRebootCapacity, partialRebootCapacity and data
+     *          are not null, and do not contain null values. Each of the
+     *          integer values in those arrays are greater than or equal to zero
+     *          (i.e. they are non-negative). fullRebootCapacity.length > 0 and
+     *          partialRebootCapacity.length > 0
+     *
+     * @ensure Returns the least cost that can be incurred by your company over
+     *         the k = data.length days (i.e. day 0 to day k-1) that you operate
+     *         the HPCS system, given that a full reboot took place the day
+     *         before you were put in charge of the system (i.e. 1 day before
+     *         day 0), and given parameters fullRebootCapacity,
+     *         partialRebootCapacity and data.
+     */
+    public static int optimalCostDynamic(int[] fullRebootCapacity,
+            int[] partialRebootCapacity, int[] data) {
+
+        return buildTable(fullRebootCapacity,partialRebootCapacity, data).get(
+                new State(0, Activity.FULL_REBOOT, 1)
+        ).cost;
     }
 
     /**
@@ -171,7 +195,21 @@ public class Dynamic {
      */
     public static Activity[] optimalActivitiesDynamic(int[] fullRebootCapacity,
             int[] partialRebootCapacity, int[] data) {
-        return null; // REMOVE THIS LINE AND WRITE THIS METHOD
+
+        buildTable(fullRebootCapacity, partialRebootCapacity, data).get(
+                new State(0, Activity.FULL_REBOOT, 1)
+        );
+
+        ArrayList<Activity> schedule = new ArrayList<>();
+
+
+
+
+
+
+
+
+        return schedule;
     }
 
 }
