@@ -1,6 +1,7 @@
 package assignment2;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Recursive {
 
@@ -71,7 +72,51 @@ public class Recursive {
     private static int optimalCostRecursive(int[] fullRebootCapacity,
             int[] partialRebootCapacity, int[] data, int d,
             Activity lastActivity, int i) {
-        return -1; // REMOVE THIS LINE AND WRITE THIS METHOD
-    }
 
+        int k = data.length;
+
+        int capacity = lastActivity.equals(Activity.FULL_REBOOT)
+                 ? fullRebootCapacity[i]
+                 : partialRebootCapacity[i];
+
+        int cost = data[d] - capacity;
+
+        if (d == k -1) { // if it's the last day
+            return cost;
+        } else {
+            int partialRebootValue = optimalCostRecursive(
+                    fullRebootCapacity,
+                    partialRebootCapacity,
+                    data,
+                    d + 1, // increment d
+                    Activity.PARTIAL_REBOOT, // change the lastActivity and reset i
+                    0
+            );
+
+            int fullRebootValue = optimalCostRecursive(
+                    fullRebootCapacity,
+                    partialRebootCapacity,
+                    data,
+                    d + 1, // increment d
+                    Activity.FULL_REBOOT, // change the lastActivity and reset i
+                    0
+            );
+
+            int noRebootValue = optimalCostRecursive(
+                    fullRebootCapacity,
+                    partialRebootCapacity,
+                    data,
+                    d + 1, // increment d
+                    lastActivity, // persist the lastActivity
+                    i + 1 // increment i
+            );
+
+
+            int maxValue = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
+                                 .max(Integer::compare)
+                                 .get();
+
+            return cost + maxValue;
+        }
+    }
 }
