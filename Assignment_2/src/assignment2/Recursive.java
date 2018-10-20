@@ -1,9 +1,113 @@
 package assignment2;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class Recursive {
+
+    static class Entry {
+        int cost;
+        Activity activity;
+
+        public Entry(int cost, Activity activity) {
+            this.cost = cost;
+            this.activity = activity;
+        }
+
+        public int getCost() {
+            return cost;
+        }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "cost=" + cost +
+                    ", activity=" + activity +
+                    '}';
+        }
+    }
+
+    static class State {
+        int d;
+        Activity lastActivity;
+        int i;
+
+        public State(int d, Activity lastActivity, int i) {
+            this.d = d;
+            this.lastActivity = lastActivity;
+            this.i = i;
+        }
+
+        public int cost(int[] fullRebootCapacity,
+                        int[] partialRebootCapacity, int[] data) {
+            int capacity = lastActivity.equals(Activity.FULL_REBOOT)
+                    ? getCurrentCapacity(fullRebootCapacity, i)
+                    : getCurrentCapacity(partialRebootCapacity, i);
+
+            int demand = data[d];
+            int cost = Math.max(0, demand - capacity);
+
+            return cost;
+        }
+
+        public State applyAction(Activity activity) {
+            if (activity == null) {
+                return new State(
+                        d,
+                        lastActivity, // persist the lastActivity
+                        i
+                );
+            } else if (activity.equals(Activity.FULL_REBOOT)) {
+                return new State(
+                        d,
+                        Activity.FULL_REBOOT, // change the lastActivity...
+                        0 // ...and reset i
+                );
+            } else {
+                return new State(
+                        d,
+                        Activity.PARTIAL_REBOOT, // change the lastActivity...
+                        0 // ... and reset i
+                );
+            }
+        }
+
+        public State incrementDay() {
+            return new State(
+                    d + 1,
+                    lastActivity,
+                    i + 1
+            );
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            State state = (State) o;
+
+            if (d != state.d) return false;
+            if (i != state.i) return false;
+            return lastActivity == state.lastActivity;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = d;
+            result = 31 * result + lastActivity.hashCode();
+            result = 31 * result + i;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "State{" +
+                    "d=" + d +
+                    ", lastActivity=" + lastActivity +
+                    ", i=" + i +
+                    '}';
+        }
+    }
 
     /**
      * Returns the capacity of the system i days after the last maintenance
@@ -92,48 +196,40 @@ public class Recursive {
             return 0;
         }
 
-        int capacity = lastActivity.equals(Activity.FULL_REBOOT)
-                ? getCurrentCapacity(fullRebootCapacity, i)
-                : getCurrentCapacity(partialRebootCapacity, i);
+        State state = new State(d, lastActivity, i);
 
-        int cost = data[d] - capacity;
+        ArrayList<Activity> actions = new ArrayList<>();
+        actions.add(Activity.FULL_REBOOT);
+        actions.add(Activity.PARTIAL_REBOOT);
+        actions.add(null);
 
-        if (cost < 0) {
-            cost = 0;
+        ArrayList<Entry> candidates = new ArrayList<>();
+
+        for (Activity action: actions) {
+            int instantaneousCost = state
+                    .applyAction(action)
+                    .cost(fullRebootCapacity, partialRebootCapacity, data);
+
+            State successor = state
+                            .applyAction(action)
+                            .incrementDay();
+
+            int successorCost = optimalCostRecursive(
+                    fullRebootCapacity,
+                    partialRebootCapacity,
+                    data,
+                    successor.d,
+                    successor.lastActivity,
+                    successor.i
+            );
+
+            candidates.add(new Entry(instantaneousCost + successorCost, action));
         }
 
-        int fullRebootCost = optimalCostRecursive(
-                fullRebootCapacity,
-                partialRebootCapacity,
-                data,
-                d + 1, // increment d
-                Activity.FULL_REBOOT, // change the lastActivity...
-                0 // ...and reset i
-        );
-
-        int partialRebootCost = optimalCostRecursive(
-                fullRebootCapacity,
-                partialRebootCapacity,
-                data,
-                d + 1, // increment d
-                Activity.PARTIAL_REBOOT, // change the lastActivity...
-                0 // ...and reset i
-        );
-
-        int noRebootCost = optimalCostRecursive(
-                fullRebootCapacity,
-                partialRebootCapacity,
-                data,
-                d + 1, // increment d
-                lastActivity, // persist the lastActivity
-                i + 1 // increment i
-        );
-
-
-        int minCost = Stream.of(partialRebootCost, fullRebootCost, noRebootCost)
-                             .min(Integer::compare)
-                             .get();
-
-        return cost + minCost;
+        return candidates
+                .stream()
+                .min(Comparator.comparing(Entry::getCost))
+                .get()
+                .cost;
     }
 }

@@ -1,7 +1,6 @@
 package assignment2;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class Dynamic {
     static class Entry {
@@ -37,26 +36,46 @@ public class Dynamic {
             this.i = i;
         }
 
-        public State transition(Activity activity) {
+        public int cost(int[] fullRebootCapacity,
+                        int[] partialRebootCapacity, int[] data) {
+            int capacity = lastActivity.equals(Activity.FULL_REBOOT)
+                    ? getCurrentCapacity(fullRebootCapacity, i)
+                    : getCurrentCapacity(partialRebootCapacity, i);
+
+            int demand = data[d];
+            int cost = Math.max(0, demand - capacity);
+
+            return cost;
+        }
+
+        public State applyAction(Activity activity) {
             if (activity == null) {
                 return new State(
-                        d + 1, // increment d
+                        d,
                         lastActivity, // persist the lastActivity
-                        i + 1 // increment i
+                        i
                 );
             } else if (activity.equals(Activity.FULL_REBOOT)) {
                 return new State(
-                        d + 1, // increment d
+                        d,
                         Activity.FULL_REBOOT, // change the lastActivity...
                         0 // ...and reset i
                 );
             } else {
                 return new State(
-                        d + 1, // increment d
+                        d,
                         Activity.PARTIAL_REBOOT, // change the lastActivity...
                         0 // ... and reset i
                 );
             }
+        }
+
+        public State incrementDay() {
+            return new State(
+                    d + 1,
+                    lastActivity,
+                    i + 1
+            );
         }
 
         @Override
@@ -119,40 +138,38 @@ public class Dynamic {
             // our last reboot can always be the day before we started (hence the i < d + 1)
             for (int i = 0; i <= d + 1; i++) {
                 for (Activity lastActivity: activities) {
-                    int capacity = lastActivity.equals(Activity.FULL_REBOOT)
-                            ? getCurrentCapacity(fullRebootCapacity, i)
-                            : getCurrentCapacity(partialRebootCapacity, i);
-
-                    int cost = data[d] - capacity;
-
-                    if (cost < 0) {
-                        cost = 0;
-                    }
-
                     State state = new State(d, lastActivity, i);
 
-                    Entry defaultValue = new Entry(0,  null); // if (d == k) { return 0 }
+                    ArrayList<Activity> actions = new ArrayList<>();
+                    actions.add(Activity.FULL_REBOOT);
+                    actions.add(Activity.PARTIAL_REBOOT);
+                    actions.add(null);
 
-                    int fullRebootCost = table
-                            .getOrDefault(state.transition(Activity.FULL_REBOOT), defaultValue)
-                            .cost;
+                    ArrayList<Entry> candidates = new ArrayList<>();
 
-                    int partialRebootCost = table
-                            .getOrDefault(state.transition(Activity.PARTIAL_REBOOT), defaultValue)
-                            .cost;
+                    for (Activity action: actions) {
+                        int instantaneousCost = state
+                                .applyAction(action)
+                                .cost(fullRebootCapacity, partialRebootCapacity, data);
 
-                    int noRebootCost = table
-                            .getOrDefault(state.transition(null), defaultValue)
-                            .cost;
+                        Entry defaultValue = new Entry(0,  null); // if (d == k) { return 0 }
+                        int successorCost = table
+                                .getOrDefault(
+                                        state
+                                                .applyAction(action)
+                                                .incrementDay(),
+                                        defaultValue
+                                ).cost;
 
-                    Entry minEntry = Stream.of(
-                            new Entry(fullRebootCost, Activity.FULL_REBOOT),
-                            new Entry(partialRebootCost, Activity.PARTIAL_REBOOT),
-                            new Entry(noRebootCost, null)
-                    ).min(Comparator.comparing(Entry::getCost))
-                    .get();
+                        candidates.add(new Entry(instantaneousCost + successorCost, action));
+                    }
 
-                    table.put(state, new Entry(cost + minEntry.cost, minEntry.activity));
+                    Entry minEntry = candidates
+                            .stream()
+                            .min(Comparator.comparing(Entry::getCost))
+                            .get();
+
+                    table.put(state, minEntry);
                 }
             }
         }
@@ -252,10 +269,8 @@ public class Dynamic {
             }
 
             Entry entry = table.get(state); // get our entry with our action
-            System.out.println(state);
-            System.out.println(entry);
             activities[i] = entry.activity;
-            state = state.transition(entry.activity); // fetch the next state
+            state = state.applyAction(entry.activity).incrementDay(); // fetch the next state
         }
 
         return activities;

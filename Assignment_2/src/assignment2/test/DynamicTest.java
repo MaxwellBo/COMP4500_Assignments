@@ -83,7 +83,6 @@ public class DynamicTest {
                 cost += Math.max(0,
                         data[d] - getCurrentCapacity(partialRebootCapacity, i));
             }
-            System.out.println(cost);
             i = i + 1;
         }
         return cost;
