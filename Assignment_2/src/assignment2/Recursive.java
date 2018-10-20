@@ -75,48 +75,52 @@ public class Recursive {
 
         int k = data.length;
 
+        if (d == k) {
+            return 0;
+        }
+
         int capacity = lastActivity.equals(Activity.FULL_REBOOT)
-                 ? fullRebootCapacity[i]
-                 : partialRebootCapacity[i];
+                 ? (i < fullRebootCapacity.length) // take the last element if i is OOB
+                    ? fullRebootCapacity[i]
+                    : fullRebootCapacity[fullRebootCapacity.length - 1]
+                 : (i < partialRebootCapacity.length) // take the last element if i is OOB
+                    ? partialRebootCapacity[i]
+                    : partialRebootCapacity[partialRebootCapacity.length - 1];
 
         int cost = data[d] - capacity;
 
-        if (d == k -1) { // if it's the last day
-            return cost;
-        } else {
-            int partialRebootValue = optimalCostRecursive(
-                    fullRebootCapacity,
-                    partialRebootCapacity,
-                    data,
-                    d + 1, // increment d
-                    Activity.PARTIAL_REBOOT, // change the lastActivity and reset i
-                    0
-            );
+        int partialRebootValue = optimalCostRecursive(
+                fullRebootCapacity,
+                partialRebootCapacity,
+                data,
+                d + 1, // increment d
+                Activity.PARTIAL_REBOOT, // change the lastActivity and reset i
+                0
+        );
 
-            int fullRebootValue = optimalCostRecursive(
-                    fullRebootCapacity,
-                    partialRebootCapacity,
-                    data,
-                    d + 1, // increment d
-                    Activity.FULL_REBOOT, // change the lastActivity and reset i
-                    0
-            );
+        int fullRebootValue = optimalCostRecursive(
+                fullRebootCapacity,
+                partialRebootCapacity,
+                data,
+                d + 1, // increment d
+                Activity.FULL_REBOOT, // change the lastActivity and reset i
+                0
+        );
 
-            int noRebootValue = optimalCostRecursive(
-                    fullRebootCapacity,
-                    partialRebootCapacity,
-                    data,
-                    d + 1, // increment d
-                    lastActivity, // persist the lastActivity
-                    i + 1 // increment i
-            );
+        int noRebootValue = optimalCostRecursive(
+                fullRebootCapacity,
+                partialRebootCapacity,
+                data,
+                d + 1, // increment d
+                lastActivity, // persist the lastActivity
+                i + 1 // increment i
+        );
 
 
-            int maxValue = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
-                                 .max(Integer::compare)
-                                 .get();
+        int minCost = Stream.of(partialRebootValue, fullRebootValue, noRebootValue)
+                             .min(Integer::compare)
+                             .get();
 
-            return cost + maxValue;
-        }
+        return cost + minCost;
     }
 }
