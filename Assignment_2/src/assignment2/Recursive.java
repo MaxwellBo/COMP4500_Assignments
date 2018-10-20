@@ -6,6 +6,19 @@ import java.util.stream.Stream;
 public class Recursive {
 
     /**
+     * Returns the capacity of the system i days after the last maintenance
+     * activity, given that the the last maintenance activity has the given
+     * capacity array.
+     */
+    private static int getCurrentCapacity(int[] capacity, int i) {
+        if (i < capacity.length) {
+            return capacity[i];
+        } else {
+            return capacity[capacity.length - 1];
+        }
+    }
+
+    /**
      * Returns the least cost that can be incurred by your company over the k =
      * data.length days (i.e. day 0 to day k-1) that you operate the HPCS
      * system, given that a full reboot took place the day before you were put
@@ -80,14 +93,14 @@ public class Recursive {
         }
 
         int capacity = lastActivity.equals(Activity.FULL_REBOOT)
-                 ? (i < fullRebootCapacity.length) // take the last element if i is OOB
-                    ? fullRebootCapacity[i]
-                    : fullRebootCapacity[fullRebootCapacity.length - 1]
-                 : (i < partialRebootCapacity.length) // take the last element if i is OOB
-                    ? partialRebootCapacity[i]
-                    : partialRebootCapacity[partialRebootCapacity.length - 1];
+                ? getCurrentCapacity(fullRebootCapacity, i)
+                : getCurrentCapacity(partialRebootCapacity, i);
 
         int cost = data[d] - capacity;
+
+        if (cost < 0) {
+            cost = 0;
+        }
 
         int fullRebootCost = optimalCostRecursive(
                 fullRebootCapacity,

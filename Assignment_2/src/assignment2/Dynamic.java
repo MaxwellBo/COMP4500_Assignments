@@ -16,6 +16,14 @@ public class Dynamic {
         public int getCost() {
             return cost;
         }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "cost=" + cost +
+                    ", activity=" + activity +
+                    '}';
+        }
     }
 
     static class State {
@@ -29,9 +37,26 @@ public class Dynamic {
             this.i = i;
         }
 
-
         public State transition(Activity activity) {
-
+            if (activity == null) {
+                return new State(
+                        d + 1, // increment d
+                        lastActivity, // persist the lastActivity
+                        i + 1 // increment i
+                );
+            } else if (activity.equals(Activity.FULL_REBOOT)) {
+                return new State(
+                        d + 1, // increment d
+                        Activity.FULL_REBOOT, // change the lastActivity...
+                        0 // ...and reset i
+                );
+            } else {
+                return new State(
+                        d + 1, // increment d
+                        Activity.PARTIAL_REBOOT, // change the lastActivity...
+                        0 // ... and reset i
+                );
+            }
         }
 
         @Override
@@ -53,6 +78,28 @@ public class Dynamic {
             result = 31 * result + i;
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "State{" +
+                    "d=" + d +
+                    ", lastActivity=" + lastActivity +
+                    ", i=" + i +
+                    '}';
+        }
+    }
+
+    /**
+     * Returns the capacity of the system i days after the last maintenance
+     * activity, given that the the last maintenance activity has the given
+     * capacity array.
+     */
+    private static int getCurrentCapacity(int[] capacity, int i) {
+        if (i < capacity.length) {
+            return capacity[i];
+        } else {
+            return capacity[capacity.length - 1];
+        }
     }
 
     public static HashMap<State, Entry> buildTable(int[] fullRebootCapacity,
@@ -73,34 +120,30 @@ public class Dynamic {
             for (int i = 0; i <= d + 1; i++) {
                 for (Activity lastActivity: activities) {
                     int capacity = lastActivity.equals(Activity.FULL_REBOOT)
-                            ? (i < fullRebootCapacity.length) // take the last element if i is OOB
-                            ? fullRebootCapacity[i]
-                            : fullRebootCapacity[fullRebootCapacity.length - 1]
-                            : (i < partialRebootCapacity.length) // take the last element if i is OOB
-                            ? partialRebootCapacity[i]
-                            : partialRebootCapacity[partialRebootCapacity.length - 1];
+                            ? getCurrentCapacity(fullRebootCapacity, i)
+                            : getCurrentCapacity(partialRebootCapacity, i);
 
                     int cost = data[d] - capacity;
 
-                    Entry defaultValue = new Entry(0, null); // if (d == k) { return 0 }
+                    if (cost < 0) {
+                        cost = 0;
+                    }
 
-                    int fullRebootCost = table.getOrDefault(new State(
-                            d + 1, // increment d
-                            Activity.FULL_REBOOT, // change the lastActivity...
-                            0 // ...and reset i
-                    ), defaultValue).cost;
+                    State state = new State(d, lastActivity, i);
 
-                    int partialRebootCost = table.getOrDefault(new State(
-                            d + 1, // increment d
-                            Activity.PARTIAL_REBOOT, // change the lastActivity...
-                            0 // ... and reset i
-                    ), defaultValue).cost;
+                    Entry defaultValue = new Entry(0,  null); // if (d == k) { return 0 }
 
-                    int noRebootCost = table.getOrDefault(new State(
-                            d + 1, // increment d
-                            lastActivity, // persist the lastActivity
-                            i + 1 // increment i
-                    ), defaultValue).cost;
+                    int fullRebootCost = table
+                            .getOrDefault(state.transition(Activity.FULL_REBOOT), defaultValue)
+                            .cost;
+
+                    int partialRebootCost = table
+                            .getOrDefault(state.transition(Activity.PARTIAL_REBOOT), defaultValue)
+                            .cost;
+
+                    int noRebootCost = table
+                            .getOrDefault(state.transition(null), defaultValue)
+                            .cost;
 
                     Entry minEntry = Stream.of(
                             new Entry(fullRebootCost, Activity.FULL_REBOOT),
@@ -109,8 +152,7 @@ public class Dynamic {
                     ).min(Comparator.comparing(Entry::getCost))
                     .get();
 
-                    State key = new State(d, lastActivity, i);
-                    table.put(key, new Entry(cost + minEntry.cost, minEntry.activity));
+                    table.put(state, new Entry(cost + minEntry.cost, minEntry.activity));
                 }
             }
         }
@@ -196,20 +238,26 @@ public class Dynamic {
     public static Activity[] optimalActivitiesDynamic(int[] fullRebootCapacity,
             int[] partialRebootCapacity, int[] data) {
 
-        buildTable(fullRebootCapacity, partialRebootCapacity, data).get(
-                new State(0, Activity.FULL_REBOOT, 1)
-        );
+        HashMap<State, Entry> table = buildTable(fullRebootCapacity, partialRebootCapacity, data);
+        Activity[] activities = new Activity[data.length];
 
-        ArrayList<Activity> schedule = new ArrayList<>();
+        State state = new State(0, Activity.FULL_REBOOT, 1); // our initial state
+        // we'll update this as we probe our table
 
+        int k = data.length;
 
+        for (int i = 0; i <= k; i++) {
+            if (!table.containsKey(state)) {
+                break;
+            }
 
+            Entry entry = table.get(state); // get our entry with our action
+            System.out.println(state);
+            System.out.println(entry);
+            activities[i] = entry.activity;
+            state = state.transition(entry.activity); // fetch the next state
+        }
 
-
-
-
-
-        return schedule;
+        return activities;
     }
-
 }
