@@ -20,5 +20,4 @@ def greedy_algo(H: int, requests: List[int]):
 
     return minTime, minOrder
     
-  
-print(greedy_algo(200, [40, 180, 300, 10]))
+print(greedy_algo(200, [40, 180, 300, 10])) # (390, [300, 180, 40, 10])
