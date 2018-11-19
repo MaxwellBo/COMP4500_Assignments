@@ -51,6 +51,24 @@ public class DynamicTest {
         Assert.assertEquals(expectedOptimalCost, actualOptimalCost);
     }
 
+    /**
+     * A basic test of the Recursive.optimalCostRecursive method: checks that
+     * the method works correctly when k=0.
+     */
+    @Test
+    public void basicCostTestBoundaryCondition() {
+        // initialise the arrays used for testing
+        int[] fullRebootCapacity = { 0, 10, 4, 1 };
+        int[] partialRebootCapacity = { 2, 8, 3, 2, 0 };
+        int[] data = {};
+
+        // compare expected to actual results
+        int expectedOptimalCost = 0;
+        int actualOptimalCost = Dynamic.optimalCostDynamic(
+                fullRebootCapacity, partialRebootCapacity, data);
+        Assert.assertEquals(expectedOptimalCost, actualOptimalCost);
+    }
+
     /*------------helper methods------------*/
 
     /**

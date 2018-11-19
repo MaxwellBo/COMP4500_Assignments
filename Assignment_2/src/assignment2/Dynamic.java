@@ -132,9 +132,8 @@ public class Dynamic {
         activities.add(Activity.PARTIAL_REBOOT);
 
         int k = data.length;
-        int lastDay = k - 1;
 
-        for (int d = lastDay; d >= 0; d--) {
+        for (int d = k; d >= 0; d--) {
             // our last reboot can always be the day before we started (hence the i < d + 1)
             for (int i = 0; i <= d + 1; i++) {
                 for (Activity lastActivity: activities) {
